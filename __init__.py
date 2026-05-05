@@ -1,0 +1,3 @@
+"""
+A simple Python package.
+"""
