@@ -1,0 +1,109 @@
+# OpenOcta 环境搭建与运行指南
+
+## 环境要求
+
+| 环境 | 版本要求 | 说明 |
+|------|---------|------|
+| **Go** | 1.25+ | 后端编译运行 |
+| **Node.js** | ≥18 | 仅构建前端时需要 |
+
+## 安装 Go 环境
+
+### 方式一：winget 安装（推荐）
+
+```powershell
+# 1. 搜索 Go 包
+winget search golang
+# 找到 "Go Programming Language" ID: GoLang.Go
+
+# 2. 安装 Go
+winget install GoLang.Go --accept-source-agreements
+
+# 3. 安装完成后，重新打开 PowerShell，验证版本
+go version
+# 应输出: go version go1.26.2 windows/amd64
+```
+
+### 方式二：手动安装
+
+1. 访问 https://go.dev/dl/ 下载 Windows MSI 安装包
+2. 双击运行，按提示完成安装
+3. 安装后重新打开 PowerShell，运行 `go version` 验证
+
+### 方式三：离线安装（内网环境）
+
+1. 在有网的电脑上下载 MSI 安装包：https://go.dev/dl/go1.26.2.windows-amd64.msi
+2. 拷贝到内网机器上双击安装
+
+### 安装后验证
+
+```powershell
+go version          # 查看版本
+go env GOPATH       # 查看 Go 工作目录
+go env GOPROXY      # 查看代理设置
+```
+
+## 安装 Node.js（如果尚未安装）
+
+```powershell
+winget install OpenJS.NodeJS.LTS --accept-source-agreements
+node --version    # 验证
+```
+
+## 搭建步骤
+
+### 1. 拉取代码
+
+```bash
+git clone https://github.com/openocta/openocta.git
+cd openocta
+```
+
+### 2. 配置 Go 代理（内网/国内必设）
+
+```bash
+go env -w GOPROXY=https://goproxy.cn,direct
+```
+
+### 3. 构建前端
+
+```bash
+cd ui
+npm install
+npm run build
+cd ..
+```
+
+> 构建产物会自动输出到 `src/embed/frontend/`
+
+### 4. 构建后端
+
+```bash
+cd src
+go build -ldflags "-s -w" -o ../openocta.exe ./cmd/openocta
+cd ..
+```
+
+### 5. 运行
+
+```bash
+openocta.exe gateway run
+```
+
+### 6. 访问
+
+浏览器打开 **http://127.0.0.1:18900**
+
+## 内网环境补充说明
+
+- **Go 依赖**：如果内网无法访问 `goproxy.cn`，需提前在有网的机器上执行 `go mod download` 下载依赖，将 `$env:GOPATH/pkg/mod` 目录拷贝到内网机器
+- **Node 依赖**：同理，`ui/node_modules` 目录可提前下载好打包带入内网
+- 或用 `go build -mod=vendor` 方式（需先执行 `go mod vendor` 将依赖放入 vendor 目录）
+
+## 常用命令
+
+| 命令 | 说明 |
+|------|------|
+| `openocta gateway run` | 启动 Gateway 服务（端口 18900） |
+| `openocta agent -m "你好"` | 运行 Agent CLI（需设置 ANTHROPIC_API_KEY） |
+| `openocta --help` | 查看所有命令 |
